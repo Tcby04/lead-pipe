@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadPipe - Capture Leads Instantly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: #0f0f0f; color: #fff; min-height: 100vh; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 8px; }
+        .tagline { color: #888; font-size: 1rem; }
+        .brand { color: #8b5cf6; }
+        
+        .pro-banner { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: #fff; padding: 12px 20px; border-radius: 12px; margin-bottom: 24px; text-align: center; font-weight: 600; }
+        .pro-banner a { color: #fff; text-decoration: underline; }
+        
+        .section { background: #1a1a1a; border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+        .section h2 { font-size: 1.1rem; color: #8b5cf6; margin-bottom: 16px; font-weight: 600; }
+        
+        .field { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; color: #888; margin-bottom: 6px; font-weight: 500; }
+        input, textarea, select { width: 100%; padding: 12px 16px; background: #252525; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 1rem; font-family: inherit; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #8b5cf6; }
+        
+        .fields-list { margin-top: 16px; }
+        .field-row { display: grid; grid-template-columns: 1fr 120px 40px; gap: 10px; align-items: end; margin-bottom: 10px; }
+        
+        .btn { padding: 12px 24px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .btn-add { background: #252525; color: #8b5cf6; border: 1px dashed #8b5cf6; }
+        .btn-add:hover { background: #8b5cf6; color: #fff; }
+        .btn-remove { background: #ff4444; color: #fff; padding: 12px; }
+        
+        .btn-primary { background: #8b5cf6; color: #fff; width: 100%; }
+        .btn-primary:hover { background: #7c3aed; }
+        
+        /* Preview Form */
+        .form-preview { background: #fff; color: #000; padding: 30px; border-radius: 16px; margin-top: 30px; display: none; }
+        .form-preview.visible { display: block; }
+        .form-preview h3 { margin-bottom: 20px; font-size: 1.5rem; }
+        .form-preview .field label { color: #333; }
+        .form-preview .field input, .form-preview .field textarea { background: #f5f5f5; border-color: #ddd; color: #000; }
+        
+        .preview-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-preview { background: #333; color: #fff; }
+        
+        /* Response View */
+        .response-view { display: none; }
+        .response-view.visible { display: block; }
+        
+        .response-card { background: #1a1a1a; border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+        .response-card .resp-field { font-size: 0.85rem; color: #888; margin-bottom: 4px; }
+        .response-card .resp-value { font-size: 1rem; }
+        
+        .empty-state { text-align: center; padding: 40px; color: #666; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: #252525; border: none; border-radius: 8px; color: #888; cursor: pointer; font-weight: 600; }
+        .tab.active { background: #8b5cf6; color: #fff; }
+        
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #8b5cf6; color: #fff; padding: 12px 24px; border-radius: 10px; font-weight: 600; transform: translateY(100px); opacity: 0; transition: all 0.3s; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        
+        footer { text-align: center; padding: 20px; color: #666; font-size: 0.85rem; }
+        footer a { color: #8b5cf6; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔗 LeadPipe</h1>
+            <p class="tagline">Capture leads with simple shareable forms. <span class="brand">Free:</span> 3 forms, 50 responses</p>
+        </header>
+        
+        <div class="pro-banner">
+            🚀 Pro: $3/month — Unlimited forms, CSV export, custom branding → 
+            <a href="https://buy.stripe.com/28E9AReBzeX65MX5uE8EM01" target="_blank">Upgrade</a>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('create')">Create Form</button>
+            <button class="tab" onclick="showTab('view')">View Responses</button>
+        </div>
+        
+        <!-- Create Tab -->
+        <div id="createTab">
+            <div class="section">
+                <h2>Form Settings</h2>
+                <div class="field">
+                    <label>Form Title</label>
+                    <input type="text" id="formTitle" placeholder="Contact Request">
+                </div>
+                <div class="field">
+                    <label>Success Message</label>
+                    <input type="text" id="successMsg" value="Thanks! We'll be in touch soon.">
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Form Fields</h2>
+                <div class="fields-list" id="fieldsList">
+                    <div class="field-row">
+                        <input type="text" placeholder="Field Label" class="field-label" value="Name">
+                        <select class="field-type">
+                            <option value="text">Text</option>
+                            <option value="email">Email</option>
+                            <option value="tel">Phone</option>
+                            <option value="textarea">Message</option>
+                        </select>
+                        <button class="btn btn-remove" onclick="removeField(this)">×</button>
+                    </div>
+                    <div class="field-row">
+                        <input type="text" placeholder="Field Label" class="field-label" value="Email">
+                        <select class="field-type">
+                            <option value="text">Text</option>
+                            <option value="email" selected>Email</option>
+                            <option value="tel">Phone</option>
+                            <option value="textarea">Message</option>
+                        </select>
+                        <button class="btn btn-remove" onclick="removeField(this)">×</button>
+                    </div>
+                </div>
+                <button class="btn btn-add" onclick="addField()">+ Add Field</button>
+            </div>
+            
+            <button class="btn btn-primary" onclick="generateForm()">Generate Form Link</button>
+            
+            <div class="form-preview" id="formPreview">
+                <h3 id="previewTitle">Contact Request</h3>
+                <div id="previewFields"></div>
+                <button class="btn btn-primary" style="margin-top: 20px;" onclick="submitPreview()">Submit</button>
+                <div class="preview-actions">
+                    <button class="btn btn-preview" onclick="shareFormLink()">🔗 Copy Link</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Response Tab -->
+        <div id="viewTab" class="response-view">
+            <div class="section">
+                <h2>Responses</h2>
+                <div id="responsesList">
+                    <div class="empty-state">No responses yet. Share your form to start capturing leads!</div>
+                </div>
+                <button class="btn btn-preview" style="margin-top: 20px;" onclick="exportCSV()">📊 Export CSV</button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Built by <a href="https://tcby04.github.io/curtis-tech/" target="_blank">Curtis Tech</a></p>
+        </footer>
+    </div>
+    
+    <div class="toast" id="toast">Link copied!</div>
+    
+    <script>
+        let currentFormData = null;
+        
+        // Check if viewing form (shared link)
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('form')) {
+            showSharedForm(params.get('form'));
+        } else {
+            loadResponses();
+        }
+        
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('createTab').style.display = tab === 'create' ? 'block' : 'none';
+            document.getElementById('viewTab').classList.toggle('visible', tab === 'view');
+            document.getElementById('viewTab').style.display = tab === 'view' ? 'block' : 'none';
+        }
+        
+        function addField() {
+            const div = document.createElement('div');
+            div.className = 'field-row';
+            div.innerHTML = `
+                <input type="text" placeholder="Field Label" class="field-label">
+                <select class="field-type">
+                    <option value="text">Text</option>
+                    <option value="email">Email</option>
+                    <option value="tel">Phone</option>
+                    <option value="textarea">Message</option>
+                </select>
+                <button class="btn btn-remove" onclick="removeField(this)">×</button>
+            `;
+            document.getElementById('fieldsList').appendChild(div);
+        }
+        
+        function removeField(btn) {
+            const rows = document.querySelectorAll('.field-row');
+            if (rows.length > 1) btn.parentElement.remove();
+        }
+        
+        function generateForm() {
+            const fields = [];
+            document.querySelectorAll('.field-row').forEach(row => {
+                fields.push({
+                    label: row.querySelector('.field-label').value || 'Field',
+                    type: row.querySelector('.field-type').value
+                });
+            });
+            
+            currentFormData = {
+                title: document.getElementById('formTitle').value || 'Contact Request',
+                successMsg: document.getElementById('successMsg').value,
+                fields: fields
+            };
+            
+            // Show preview
+            document.getElementById('previewTitle').textContent = currentFormData.title;
+            document.getElementById('previewFields').innerHTML = fields.map(f => `
+                <div class="field">
+                    <label>${f.label}${f.type === 'email' ? ' *' : ''}</label>
+                    <${f.type === 'textarea' ? 'textarea' : 'input'} 
+                        type="${f.type === 'textarea' ? '' : f.type}" 
+                        ${f.type === 'email' ? 'required' : ''}
+                        data-label="${f.label}">
+                    </${f.type === 'textarea' ? 'textarea' : 'input'}>
+                </div>
+            `).join('');
+            
+            document.getElementById('formPreview').classList.add('visible');
+            document.getElementById('formPreview').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function submitPreview() {
+            // Save response
+            const responses = JSON.parse(localStorage.getItem('leadPipeResponses') || '[]');
+            const response = { timestamp: new Date().toISOString() };
+            
+            document.querySelectorAll('#previewFields input, #previewFields textarea').forEach(el => {
+                response[el.dataset.label] = el.value;
+            });
+            
+            responses.push(response);
+            localStorage.setItem('leadPipeResponses', JSON.stringify(responses));
+            
+            alert(currentFormData.successMsg || 'Thanks for your submission!');
+            document.getElementById('formPreview').classList.remove('visible');
+        }
+        
+        function shareFormLink() {
+            const encoded = btoa(JSON.stringify(currentFormData));
+            const url = window.location.origin + window.location.pathname + '?form=' + encoded;
+            navigator.clipboard.writeText(url).then(() => showToast('Link copied!'));
+        }
+        
+        function showSharedForm(encoded) {
+            try {
+                const data = JSON.parse(atob(encoded));
+                document.body.innerHTML = `
+                    <div class="container">
+                        <div class="form-preview visible" style="display: block;">
+                            <h3>${data.title}</h3>
+                            <form onsubmit="handleFormSubmit(event)">
+                                ${data.fields.map(f => `
+                                    <div class="field">
+                                        <label>${f.label}</label>
+                                        <${f.type === 'textarea' ? 'textarea' : 'input'} 
+                                            type="${f.type === 'textarea' ? '' : f.type}" 
+                                            name="${f.label}"
+                                            ${f.type === 'email' ? 'required' : ''}>
+                                        </${f.type === 'textarea' ? 'textarea' : 'input'}>
+                                    </div>
+                                `).join('')}
+                                <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Submit</button>
+                            </form>
+                            <p style="margin-top: 20px; text-align: center; color: #999; font-size: 0.8rem;">Powered by LeadPipe</p>
+                        </div>
+                    </div>
+                `;
+                window.formData = data;
+            } catch(e) {
+                alert('Invalid form link');
+            }
+        }
+        
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = { timestamp: new Date().toISOString() };
+            formData.forEach((v, k) => response[k] = v);
+            
+            const responses = JSON.parse(localStorage.getItem('leadPipeResponses') || '[]');
+            responses.push(response);
+            localStorage.setItem('leadPipeResponses', JSON.stringify(responses));
+            
+            alert(window.formData.successMsg || 'Thanks!');
+            e.target.reset();
+        }
+        
+        function loadResponses() {
+            const responses = JSON.parse(localStorage.getItem('leadPipeResponses') || '[]');
+            if (responses.length === 0) return;
+            
+            const list = document.getElementById('responsesList');
+            list.innerHTML = responses.reverse().map((r, i) => `
+                <div class="response-card">
+                    <div style="font-size: 0.75rem; color: #666; margin-bottom: 10px;">${new Date(r.timestamp).toLocaleString()}</div>
+                    ${Object.entries(r).filter(([k]) => k !== 'timestamp').map(([k, v]) => `
+                        <div class="resp-field">${k}</div>
+                        <div class="resp-value">${v}</div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+        
+        function exportCSV() {
+            const responses = JSON.parse(localStorage.getItem('leadPipeResponses') || '[]');
+            if (responses.length === 0) { showToast('No responses to export'); return; }
+            
+            const headers = [...new Set(responses.flatMap(r => Object.keys(r)))];
+            const csv = [
+                headers.join(','),
+                ...responses.map(r => headers.map(h => `"${(r[h] || '').replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'leads.csv';
+            a.click();
+            showToast('CSV exported!');
+        }
+        
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+</html>
